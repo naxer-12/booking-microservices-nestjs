@@ -3,11 +3,14 @@
 FROM node:20.19.2-alpine AS builder
 WORKDIR /app
 
-# Copy source code
+# Copy and install building-blocks first
 COPY src/building-blocks ./src/building-blocks
-COPY src/booking ./src/booking
+WORKDIR /app/src/building-blocks
+RUN npm install
 
-# Install & build inside booking
+# Copy and build booking
+WORKDIR /app
+COPY src/booking ./src/booking
 WORKDIR /app/src/booking
 RUN npm install && npm run build
 
@@ -21,7 +24,7 @@ ENV NODE_ENV=docker
 COPY src/booking/package*.json ./
 
 # Install only production deps
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 # Copy build artifacts
 COPY --from=builder /app/src/booking/dist ./dist
